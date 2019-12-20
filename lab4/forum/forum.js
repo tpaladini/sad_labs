@@ -3,12 +3,40 @@ var app = express();
 var http = require('http').Server(app);
 var io = require('socket.io')(http);
 var dm = require('./dm_remote.js');
+var argparse = require('argparse');
+var zmq = require('zeromq');
 
-let HOST = "127.0.0.1";
-let PORT = "9001"
+var parser = new argparse.ArgumentParser({
+	version: '0.0.1',
+	addHelp: true,
+	description: 'Forum server'
+});
 
-let pubPort = process.argv[2];
+parser.addArgument('--dmhost' , {
+	required: true,
+	help: 'Ip address of DMSERVER host'
+});
 
+parser.addArgument('--dmport', {
+	required: false,
+	help: 'Port of DMSERVER host'
+});
+
+parser.addArgument('--pubPort', {
+	help: 'Publisher port'
+});
+
+parser.addArgument('--servePort', {
+	defaultValue: "10000",
+	help: "Serve on port PORT"
+})
+
+var args = parser.parseArgs();
+
+let dmhost = args.dmhost;
+let dmport = args.dmport;
+let pubPort = args.pubPort;
+let servePort = args.servePort;
 
 var viewsdir = __dirname + '/views';
 app.set('views', viewsdir)
@@ -38,9 +66,20 @@ app.get('/:page', function(req, res){
 	get_page (req, res);
 });
 
-dm.Start(HOST, PORT, function() {
-	http.listen (10000, on_startup); // Listen for connections !!
+dm.Start(dmhost, dmport, function() { // Get connection with DM FIRST
+	console.log("Serving forum on:", servePort);
+	http.listen (servePort, on_startup); // Then listen for connections
 });
+
+let sub = zmq.socket('sub');
+sub.connect('tcp://' + dmhost + ':' + pubPort);
+sub.subscribe('forumUpdates');
+sub.on('message', (topic, message) => { 
+	message = JSON.parse(message);
+	console.log("READ: ", message);
+	io.emit("message", JSON.stringify(message));
+});
+
 
 io.on('connection', function(sock) {
 	console.log("Event: client connected");

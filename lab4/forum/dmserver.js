@@ -1,22 +1,39 @@
-var HOST = '127.0.0.1';
-let port = process.argv[2];
-// let pubPort = process.argv[3];
-
 var dm = require ('./dm.js');
 const zmq = require('zeromq');
-let server = zmq.socket('rep');
+var argparse = require('argparse');
 
-server.bind('tcp://*:' + port,
+var parser = new argparse.ArgumentParser({
+	version: '0.0.1',
+	addHelp:true,
+	description: 'DMServer'
+});
+
+parser.addArgument('--servePort', {
+	defaultValue: "9000",
+	help: "Serve on port PORT"
+})
+
+parser.addArgument('--pubPort', {
+	defaultValue: "9001",
+	help: "Publish on port PORT"
+})
+
+var args = parser.parseArgs();
+let servePort = args.servePort;
+let pubPort = args.pubPort;
+
+
+let server = zmq.socket('rep');
+server.bind('tcp://*:' + servePort,
     function(error) {
         if (error) console.log(error);
-        console.log("Opened ZEROMQ socket on " + port);
+        console.log("Opened reply socket on port:", servePort);
 });
 
 server.on('message', (data) => {
-    console.log('request comes in...' + data);
     var str = data.toString();
     var invo = JSON.parse (str);
-    console.log('request is:' + invo.what + ':' + str);
+    console.log('Received request:' + invo.what + ':' + str);
 
     // what is CMD?
     let cmd = invo;
@@ -53,8 +70,13 @@ server.on('message', (data) => {
             break;
         case 'add public message':
             reply.obj = dm.addPublicMessage(cmd.msg);
+            pub.send(['forumUpdates', JSON.stringify(invo.msg)]);
             break;                                                                                                            
     }
     server.send(JSON.stringify(reply));
 });
 
+let pub = zmq.socket('pub');
+pub.bind('tcp://*:' + pubPort, function() {
+    console.log("Publishing updates on port:", pubPort)
+});

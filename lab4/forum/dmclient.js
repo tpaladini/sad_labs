@@ -7,23 +7,32 @@ let port = endpoint[1];
 let command = process.argv[3];
 let commandArgs = process.argv.slice(4);
 
-let callback = function (data) {
-	console.log(data);
-	dm.Close();
-}
-
 let allowedCommands = {
 	'get private message list': dm.getPrivateMessageList,
 	'get public message list': dm.getPublicMessageList,
 	'get subject list': dm.getSubjectList,
 	'add private message': dm.addPrivateMessage,
-	'add public message': dm.addPublicMessage,
+	'add public message': sendMessage,
 	'new user': dm.addUser,
 	'new subject': dm.addSubject,
 	'get user list': dm.getUserList,
 	'login': dm.login
 };
 
+function Message (msg, from, to, isPrivate, ts) {
+	this.msg=msg; this.from=from; this.isPrivate=isPrivate; this.to=to; this.ts=ts;
+}
+
+function sendMessage(message, from, to, callback) {
+	let msg = new Message(message, from, to, false, new Date());
+	console.log("Sending msg:", msg);
+	dm.addPublicMessage(msg, callback);
+}
+
 dm.Start(host, port, function () {
-	allowedCommands[command](...commandArgs, callback);
+	allowedCommands[command](...commandArgs, function (data) { 
+		if(data) console.log(data);
+		else console.log("OK");
+		dm.Close(); // close socket
+	});
 });

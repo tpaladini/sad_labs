@@ -3,12 +3,12 @@ var app = express();
 var http = require('http').Server(app);
 var io = require('socket.io')(http);
 var dm = require('./dm_remote.js');
+
 let HOST = "127.0.0.1";
 let PORT = "9001"
 
 let pubPort = process.argv[2];
 
-dm.Start(HOST, PORT);
 
 var viewsdir = __dirname + '/views';
 app.set('views', viewsdir)
@@ -38,7 +38,9 @@ app.get('/:page', function(req, res){
 	get_page (req, res);
 });
 
-
+dm.Start(HOST, PORT, function() {
+	http.listen (10000, on_startup); // Listen for connections !!
+});
 
 io.on('connection', function(sock) {
 	console.log("Event: client connected");
@@ -135,6 +137,3 @@ io.on('connection', function(sock) {
   		});
   	});
 });
-
-// Listen for connections !!
-http.listen (10000, on_startup);

@@ -6,7 +6,11 @@ var dm = require ('./dm.js');
 const zmq = require('zeromq');
 let server = zmq.socket('rep');
 
-server.bind('tcp://*:' + port);
+server.bind('tcp://*:' + port,
+    function(error) {
+        if (error) console.log(error);
+        console.log("Opened ZEROMQ socket on " + port);
+});
 
 server.on('message', (data) => {
     console.log('request comes in...' + data);

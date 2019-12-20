@@ -4,7 +4,7 @@ let zmqsocket = zmq.socket("req");
 exports.Start = function (host, port, cb) {
 	zmqsocket.connect("tcp://"+host+":"+port);
 	console.log("connected to zmq socket at " + host + ":" + port);
-	cb();
+	if (cb) cb();
 }
 
 exports.Close = function () {

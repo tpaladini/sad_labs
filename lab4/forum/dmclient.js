@@ -20,7 +20,7 @@ let allowedCommands = {
 };
 
 function Message (msg, from, to, isPrivate, ts) {
-	this.msg=msg; this.from=from; this.isPrivate=isPrivate; this.to=to; this.ts=ts;
+	this.msg=msg; this.from=from; this.isPrivate=isPrivate; this.to=to; this.ts=ts; this.propagate = true;
 }
 
 function sendMessage(message, from, to, callback) {

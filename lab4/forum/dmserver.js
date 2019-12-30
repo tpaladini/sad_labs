@@ -70,7 +70,7 @@ server.on('message', (data) => {
             break;
         case 'add public message':
             reply.obj = dm.addPublicMessage(cmd.msg);
-            pub.send(['forumUpdates', JSON.stringify(invo.msg)]);
+            if (cmd.msg.propagate) pub.send(['forumUpdates', JSON.stringify(invo.msg)]);
             break;                                                                                                            
     }
     server.send(JSON.stringify(reply));

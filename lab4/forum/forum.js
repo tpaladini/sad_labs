@@ -13,17 +13,18 @@ var parser = new argparse.ArgumentParser({
 });
 
 parser.addArgument('--dmhost' , {
-	required: true,
-	help: 'Ip address of DMSERVER host'
+	help: 'Ip address of DMSERVER host',
+	defaultValue: "localhost"
 });
 
 parser.addArgument('--dmport', {
-	required: false,
-	help: 'Port of DMSERVER host'
+	help: 'Port of DMSERVER host',
+	defaultValue: "9000"
 });
 
 parser.addArgument('--pubPort', {
-	help: 'Publisher port'
+	help: 'Publisher port',
+	defaultValue: "9001"
 });
 
 parser.addArgument('--servePort', {
@@ -94,6 +95,7 @@ io.on('connection', function(sock) {
   		console.log("Event: message: " + msgStr);
   		var msg = JSON.parse (msgStr);
 		msg.ts = new Date(); // timestamp
+		msg.propagate = false; // add a propagation
 		if (msg.isPrivate) {
 			dm.addPrivateMessage (msg, function () {
 				io.emit('message', JSON.stringify(msg));

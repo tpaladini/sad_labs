@@ -19,12 +19,12 @@ parser.addArgument('--dmhost' , {
 
 parser.addArgument('--dmport', {
 	help: 'Port of DMSERVER host',
-	defaultValue: "9000"
+	defaultValue: "8000"
 });
 
 parser.addArgument('--pubPort', {
 	help: 'Publisher port',
-	defaultValue: "9001"
+	defaultValue: "9000"
 });
 
 parser.addArgument('--servePort', {
@@ -74,7 +74,7 @@ dm.Start(dmhost, dmport, function() { // Get connection with DM FIRST
 
 let sub = zmq.socket('sub');
 sub.connect('tcp://' + dmhost + ':' + pubPort);
-sub.subscribe('forumUpdates');
+sub.subscribe('webserver');
 sub.on('message', (topic, message) => { 
 	message = JSON.parse(message);
 	console.log("READ: ", message);

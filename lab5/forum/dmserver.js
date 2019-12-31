@@ -9,36 +9,62 @@ var parser = new argparse.ArgumentParser({
 });
 
 parser.addArgument('--servePort', {
-	defaultValue: "9000",
+	defaultValue: "8000",
 	help: "Serve on port PORT"
 })
 
 parser.addArgument('--pubPort', {
-	defaultValue: "9001",
+	defaultValue: "9000",
 	help: "Publish on port PORT"
+})
+   
+parser.addArgument('--publishers', {
+    help: "list of publishers",
+    nargs: "+"
 })
 
 var args = parser.parseArgs();
 let servePort = args.servePort;
 let pubPort = args.pubPort;
+let publishers = args.publishers ? args.publishers : [];
 
+// for each known publisher subscribe to the topic "checkpoint"
+let subSocket = zmq.socket('sub');
 
-let server = zmq.socket('rep');
-server.bind('tcp://*:' + servePort,
+publishers.forEach((v) => { 
+    console.log("Connecting to publisher (CHECKPOINT): "+ v);
+    subSocket.connect(v);
+    subSocket.subscribe('checkpoint');
+});
+
+subSocket.on('message', (topic, message) => {
+    message = JSON.parse(message);
+    console.log("Subscriber socket received (" + topic + "): ", message);
+    console.log("Sending message to webservers");
+    pubSocket.send(['webserver', JSON.stringify(message)]);
+});
+
+let pubSocket = zmq.socket('pub');
+pubSocket.bind('tcp://*:' + pubPort, function() {
+    console.log("Publishing updates on port (WEBSERVER):", pubPort)
+});
+
+let repSocket = zmq.socket('rep');
+repSocket.bind('tcp://*:' + servePort,
     function(error) {
         if (error) console.log(error);
         console.log("Opened reply socket on port:", servePort);
 });
 
-server.on('message', (data) => {
+repSocket.on('message', (data) => {
     var str = data.toString();
     var invo = JSON.parse (str);
+
     console.log('Received request:' + invo.what + ':' + str);
 
-    // what is CMD?
     let cmd = invo;
-
     var reply = {what:invo.what, invoId:invo.invoId};
+
     switch (invo.what) {
         case 'get subject list': 
             reply.obj = dm.getSubjectList();
@@ -49,18 +75,20 @@ server.on('message', (data) => {
         case 'get private message list': 
             reply.obj = dm.getPrivateMessageList (cmd.u1, cmd.u2);
             break;
-        // TODO: complete all forum functions
         case 'add private message':
             reply.obj = dm.addPrivateMessage(cmd.msg);
+            pubSocket.send(['checkpoint', JSON.stringify(invo)]);
             break;
         case 'get subject list':
             reply.obj = dm.getSubjectList();
             break;
         case 'new user':
             reply.obj = dm.addUser(cmd.u, cmd.p);
+            pubSocket.send(['checkpoint', JSON.stringify(invo)]);
             break;
         case 'new subject':
             reply.obj = dm.addSubject(cmd.s);
+            pubSocket.send(['checkpoint', JSON.stringify(invo)]);
             break;
         case 'get user list':
             reply.obj = dm.getUserList();
@@ -70,13 +98,13 @@ server.on('message', (data) => {
             break;
         case 'add public message':
             reply.obj = dm.addPublicMessage(cmd.msg);
-            if (cmd.msg.propagate) pub.send(['forumUpdates', JSON.stringify(invo.msg)]);
+            if (cmd.msg.propagate) { 
+                console.log("Sending to webserver")
+                pubSocket.send(['webserver', JSON.stringify(invo.msg)]);
+            }    
+            console.log("Sending checkpoint message")
+            pubSocket.send(['checkpoint', JSON.stringify(invo.msg)]);
             break;                                                                                                            
     }
-    server.send(JSON.stringify(reply));
-});
-
-let pub = zmq.socket('pub');
-pub.bind('tcp://*:' + pubPort, function() {
-    console.log("Publishing updates on port:", pubPort)
+    repSocket.send(JSON.stringify(reply));
 });

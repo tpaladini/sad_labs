@@ -11,17 +11,21 @@ var parser = new argparse.ArgumentParser({
 parser.addArgument('--servePort', {
 	defaultValue: "8000",
 	help: "Serve on port PORT"
-})
+});
 
 parser.addArgument('--pubPort', {
 	defaultValue: "9000",
 	help: "Publish on port PORT"
-})
+});
    
 parser.addArgument('--publishers', {
     help: "list of publishers",
     nargs: "+"
-})
+});
+
+parser.addArgument('--webDelay', {
+
+});
 
 var args = parser.parseArgs();
 let servePort = args.servePort;
@@ -42,6 +46,7 @@ subSocket.on('message', (topic, message) => {
     console.log("Subscriber socket received (" + topic + "): ", message);
     console.log("Sending message to webservers");
     pubSocket.send(['webserver', JSON.stringify(message)]);
+    dm.addPublicMessage(message);
 });
 
 let pubSocket = zmq.socket('pub');

@@ -22,8 +22,8 @@ parser.addArgument('--dmport', {
 	defaultValue: "8000"
 });
 
-parser.addArgument('--pubPort', {
-	help: 'Publisher port',
+parser.addArgument('--subPort', {
+	help: 'Subscribe to port',
 	defaultValue: "9000"
 });
 
@@ -36,7 +36,7 @@ var args = parser.parseArgs();
 
 let dmhost = args.dmhost;
 let dmport = args.dmport;
-let pubPort = args.pubPort;
+let subPort = args.subPort;
 let servePort = args.servePort;
 
 var viewsdir = __dirname + '/views';
@@ -73,7 +73,8 @@ dm.Start(dmhost, dmport, function() { // Get connection with DM FIRST
 });
 
 let sub = zmq.socket('sub');
-sub.connect('tcp://' + dmhost + ':' + pubPort);
+sub.connect('tcp://' + dmhost + ':' + subPort);
+console.log("Subscribed to port " + subPort);
 sub.subscribe('webserver');
 sub.on('message', (topic, message) => { 
 	message = JSON.parse(message);

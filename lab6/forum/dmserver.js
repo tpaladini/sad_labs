@@ -23,14 +23,21 @@ parser.addArgument('--publishers', {
     nargs: "+"
 });
 
-parser.addArgument('--webDelay', {
-
+parser.addArgument('--delay', {
+    help: "delay in ms before sending message to webserver",
+    defaultValue: "0",
 });
 
 var args = parser.parseArgs();
 let servePort = args.servePort;
 let pubPort = args.pubPort;
 let publishers = args.publishers ? args.publishers : [];
+let delay = parseInt(args.delay);
+
+if (delay < 0) {
+    console.error("delay must be a positive number!");
+    process.exit(-1);
+}
 
 // for each known publisher subscribe to the topic "checkpoint"
 let subSocket = zmq.socket('sub');
@@ -44,6 +51,7 @@ publishers.forEach((v) => {
 subSocket.on('message', (topic, message) => {
     message = JSON.parse(message);
     console.log("Subscriber socket received (" + topic + "): ", message);
+    wait(delay);
     console.log("Sending message to webservers");
     pubSocket.send(['webserver', JSON.stringify(message)]);
     dm.addPublicMessage(message);
@@ -114,7 +122,13 @@ repSocket.on('message', (data) => {
     repSocket.send(JSON.stringify(reply));
 });
 
-function delay(n) {
+function wait(n) {
+
+    if (n == 0) {
+        return;
+    }
+
+    console.log("Waiting " + n + "ms");
     time = new Date().getTime();
     time2 = time + n;
     while (time < time2) {

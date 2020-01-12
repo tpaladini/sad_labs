@@ -1,4 +1,6 @@
 var dm = require ('./dm_remote.js');
+var dmModel = require('./dm.js');
+
 
 let endpoint = process.argv[2];
 endpoint = endpoint.split(":")
@@ -19,12 +21,10 @@ let allowedCommands = {
 	'login': dm.login
 };
 
-function Message (msg, from, to, isPrivate, ts) {
-	this.msg=msg; this.from=from; this.isPrivate=isPrivate; this.to=to; this.ts=ts; this.propagate = true;
-}
 
 function sendMessage(message, from, to, callback) {
-	let msg = new Message(message, from, to, false, new Date());
+	let msg = new dmModel.Message(message, from, to, false, new Date());
+	msg.propagate = true;
 	console.log("Sending msg:", msg);
 	dm.addPublicMessage(msg, callback);
 }

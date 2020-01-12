@@ -1,5 +1,5 @@
 var dm = require ('./dm_remote.js');
-var dmModel = require('./dm.js');
+var dmModel = require ('./dm.js');
 
 
 let endpoint = process.argv[2];

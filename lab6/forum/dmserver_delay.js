@@ -28,11 +28,19 @@ parser.addArgument('--delay', {
     defaultValue: "0",
 });
 
+parser.addArgument('--delayPublisher', {
+    help: "delay messages arriving from a certain publisher --delayPublisher ID AMOUNT(ms)",
+    nargs: "2",
+    required: false
+});
+
 var args = parser.parseArgs();
 let servePort = args.servePort;
 let pubPort = args.pubPort;
 let publishers = args.publishers ? args.publishers : [];
 let delay = parseInt(args.delay);
+let delayPublisher = args.delayPublisher;
+
 
 if (delay < 0) {
     console.error("delay|incDelay must be a positive number!");
@@ -40,21 +48,27 @@ if (delay < 0) {
 }
 
 // for each known publisher subscribe to the topic "checkpoint"
-let subSocket = zmq.socket('sub');
+let subSockets = [];
 
 publishers.forEach((v) => { 
+    let subSocket = zmq.socket('sub');
+    subSockets.push(subSocket);
     console.log("Connecting to publisher (CHECKPOINT): "+ v);
     subSocket.connect(v);
     subSocket.subscribe('checkpoint');
-});
 
+    subSocket.on('message', (topic, message) => {
 
-subSocket.on('message', (topic, message) => {
-    message = JSON.parse(message);
-    console.log("Subscriber socket received (" + topic + "): ", message);
-    console.log("Sending message to webservers");
-    pubSocket.send(['webserver', JSON.stringify(message)]);
-    dm.addPublicMessage(message);
+        if (delayPublisher[0] == v) {
+            wait(delayPublisher[1]);
+        }
+
+        message = JSON.parse(message);
+        console.log("Subscriber socket received (" + topic + "): ", message);
+        console.log("Sending message to webservers");
+        pubSocket.send(['webserver', JSON.stringify(message)]);
+        dm.addPublicMessage(message);
+    });
 });
 
 let pubSocket = zmq.socket('pub');

@@ -4,6 +4,9 @@ function Message (msg, from, to, isPrivate, ts) {
     this.msg=msg; this.from=from; this.isPrivate=isPrivate; this.to=to; this.ts=ts;
 }
 
+// export added in order to not replicate Message definition in dmclient.js
+exports.Message = Message;
+
 function Post (msg, from, ts) {
 	this.msg=msg; this.from=from; this.ts=ts;
 }

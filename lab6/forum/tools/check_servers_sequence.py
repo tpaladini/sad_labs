@@ -3,7 +3,6 @@ import os
 import json
 
 sequences = []
-length = max_messages
 
 for i in range(0,3):
     print(f"getting messages from localhost:800{i}")
@@ -17,7 +16,7 @@ for i in range(0,3):
     
     # read json message list
     data = json.loads(output)
-    sequences.append([x["msg"] for x in data][:max_messages])
+    sequences.append([x["msg"] for x in data])
 
 min_length = min([len(x) for x in sequences])
 sequences = [x[:min_length] for x in sequences]
@@ -30,4 +29,5 @@ else:
     print("the system is not sequentially consistent")
 
 for i in range(0, min_length):
-    print(f"{sequences[0][i]}\t\t\t|{sequences[1][i]}\t\t\t|{sequences[2][i]}") 
+    if not(sequences[0][i] == sequences[1][i] == sequences[2][i]):
+        print(f"{i}: {sequences[0][i]}\t\t\t|{sequences[1][i]}\t\t\t|{sequences[2][i]}") 

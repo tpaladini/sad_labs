@@ -13,7 +13,7 @@ do
 	((i++))
 	echo $i
 	node ../dmclient.js localhost:8000 "add public message" 1 mudito id0 > /dev/null
-      	node ../dmclient.js localhost:8001 "add public message" 2 mudito id0 > /dev/null
+    node ../dmclient.js localhost:8001 "add public message" 2 mudito id0 > /dev/null
 	node ../dmclient.js localhost:8002 "add public message" 3 mudito id0 > /dev/null
 done
 

@@ -35,7 +35,7 @@ let publishers = args.publishers ? args.publishers : [];
 let delay = parseInt(args.delay);
 
 if (delay < 0) {
-    console.error("delay|incDelay must be a positive number!");
+    console.error("delay must be a positive number!");
     process.exit(-1);
 }
 
@@ -111,6 +111,7 @@ repSocket.on('message', (data) => {
             break;
         case 'add public message':
             reply.obj = dm.addPublicMessage(cmd.msg);
+            
             wait(delay);
 
             console.log("Sending checkpoint message")
@@ -126,7 +127,6 @@ repSocket.on('message', (data) => {
 });
 
 function wait(n) {
-
     if (n == 0) {
         return;
     }
@@ -137,6 +137,4 @@ function wait(n) {
     while (time < time2) {
         time = new Date().getTime(); 
     }
-
-    // delay += incDelay;
 }
